@@ -2,7 +2,7 @@
 - [x] Nada por ahora.
 
 ## Computación en Internet III
-- [x] Nada por ahora.
+- [ ] Estudiar para el quiz del miércoles.
 
 ## Ingeniería de Software V
 - [ ] Repasar conceptos dados en clase.
