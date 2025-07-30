@@ -5,8 +5,8 @@
 - [ ] Estudiar para el quiz del miércoles.
 
 ## Ingeniería de Software V
-- [ ] Repasar conceptos dados en clase.
-- [ ] Repasar para control de Scripts de Powershell y Bash básicos.
+- [x] Repasar conceptos dados en clase.
+- [x] Repasar para control de Scripts de Powershell y Bash básicos.
 
 ## Innovación y Emprendimiento III
 - [x] Nada por ahora.
@@ -21,6 +21,8 @@
 - [x] Nada por ahora.
 
 ## Proyecto Integrador II
-- [x] Nada por ahora.
+- [ ] Leer reglas de juego.
+- [ ] Hacer preparación individual para trabajo en equipo.
+- [ ] Hacer encuestas de habilidades personales.
 
 
