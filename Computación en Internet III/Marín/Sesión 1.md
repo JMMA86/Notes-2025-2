@@ -1,6 +1,7 @@
 # Conceptos
 ORM -> Object Relational Mapping
 CRM -> Customer Relationship Management
+CMS -> Content Management System
 SOA -> Service-Oriented Architecture
 SLA -> Service Level Agreement
 ANS -> Acuerdo nivel de servicio
