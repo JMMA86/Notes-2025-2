@@ -1,0 +1,1 @@
+Link del docs: https://docs.google.com/document/d/12mhgnVxQ-6-7SvMRtD2h9ZO4gI-aZUuS6Zira6s4vTM/edit?usp=sharing
