@@ -1,4 +1,4 @@
-
+	
 ### **¿Qué es DevOps?**
 
 DevOps es un conjunto de prácticas **orientadas a reducir el tiempo** entre el momento en que se hace un cambio en el sistema (código) y cuando dicho cambio se implementa en producción, **sin sacrificar calidad**.
