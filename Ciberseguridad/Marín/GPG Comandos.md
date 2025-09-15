@@ -55,8 +55,21 @@ gpg --verify MensajeFirmado.txt.asc
 Editar confianza:
 
 ```powershell
-gpg --edit-key os.gomez.lozano@gmail.com
+gpg --edit-key jcuellar@icesi.edu.co
 trust
 s
 save
 ```
+
+Crear Firma:
+
+```powershell
+gpg --sign --detach-sign -a GuiaGPG.pdf
+```
+
+Comparar Hashes:
+
+```powershell
+fc hash1.txt hash2.txt
+```
+

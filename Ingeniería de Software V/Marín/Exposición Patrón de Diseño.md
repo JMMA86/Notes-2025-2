@@ -1,0 +1,1 @@
+Exponer formal, como roles, con diapositivas.
