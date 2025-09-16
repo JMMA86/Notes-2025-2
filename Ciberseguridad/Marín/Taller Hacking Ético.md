@@ -199,3 +199,127 @@ Se puede deducir que:
 - Los tokens de verificación (como `google-site-verification`) no son secretos, pero su exposición confirma que el dominio está activamente gestionado —lo que implica que otras configuraciones (DNS, APIs, subdominios) también podrían estar expuestas.  
 - Estos registros son fundamentales para evaluar la seguridad de correo electrónico y detectar posibles fugas de credenciales o configuraciones mal aplicadas en servicios terceros.
 
+# 15 openssl icesi.edu.co
+![[Pasted image 20250915165406.png]]
+
+### Detalles importantes
+- **Certificado:**
+    - **CN (Common Name):** `*.icesi.edu.co` → válido para cualquier subdominio bajo `icesi.edu.co`.
+    - **Organización:** Universidad Icesi, Cali, Valle del Cauca, CO.
+    - **CA emisora:** DigiCert Global G2 TLS RSA SHA256 2020 CA1 (una de las principales CAs del mundo).
+    - **Validez:** 11 de agosto de 2025 → 5 de septiembre de 2026.
+- **Seguridad criptográfica:**
+    - **Algoritmo:** RSA 2048 bits (firma).
+    - **Cifrado de sesión:** ECDHE-RSA-AES128-GCM-SHA256 (protocolo TLS 1.2).
+    - **Handshake:** OK, certificado verificado, cadena de confianza completa.
+### Implicaciones
+1. El certificado es **válido y confiable**, por lo tanto la universidad protege sus comunicaciones web con TLS moderno.
+2. Usan **wildcard** para simplificar la gestión de certificados en múltiples subdominios.
+3. El uso de **TLS 1.2 con ECDHE y GCM** asegura confidencialidad y forward secrecy, aunque hoy en día lo ideal es TLS 1.3.
+
+# 16 pasos 8-15 de nuevo con otra página
+
+![[Pasted image 20250915160925.png]]
+
+Con el reciente auge del concepto del vibe coding, se nos ocurrió incidir en su nivel de seguridad. Photoguruai es una página para hacer headshots de fotos hecha con vibe coding, entonces probaremos que tal le va.
+
+- Vemos entonces una única red IPv4.
+
+### Datos útiles en este caso
+- **Rango de IP asignado**: `76.76.21.0/24`. Permite saber qué hosts están bajo control de Vercel (posibles superficies de ataque si alojan apps del objetivo).
+- **Organización responsable**: _Vercel, Inc._ Identifica el proveedor de infraestructura.
+- **NetName / NetHandle**: `VERCEL-01 / NET-76-76-21-0-1`. Ayuda a correlacionar recursos con otros registros públicos.
+- **ASN / Parent Net**: Relaciona con _NET76_, útil para ver enrutamiento y BGP.
+- **Certificado embebido**: Puede dar pistas sobre dominios asociados, vigencia de certificados y configuraciones TLS.
+- **Fechas de registro y actualización**: Ayudan a evaluar la madurez de la infraestructura (ej: IP asignada desde 2020).
+
+### Datos útiles sacados de central ops
+- **Certificado embebido**: puede revelar dominios internos o configuraciones TLS.
+- **Reverse DNS fallido (PTR inexistente)**:
+    - Puede indicar que el host no tiene nombre asociado.
+    - Se usa en fingerprinting: ayuda a diferenciar servicios internos de frontales expuestos.
+    - Algunos firewalls, listas blancas o filtros de correo se basan en PTR, su ausencia puede dar vectores indirectos.
+
+![[Pasted image 20250915162037.png]]
+
+#### nslookup en modo comando
+![[Pasted image 20250915162334.png]]
+
+### Deducciones técnicas
+- **Uso de Cloudflare**:
+    - DNS apunta a _nameservers de Cloudflare_.
+    - Esto significa que el dominio aprovecha protección DDoS, CDN y proxy de Cloudflare.
+    - El IP real del servidor no aparece aquí.
+- **Infraestructura visible**:
+    - _IPv4_:
+        - `108.162.x.x`
+        - `172.64.x.x`
+        - `173.245.x.x`
+    - _IPv6_:
+        - Rango `2606:4700::/32` (Cloudflare)
+        - Rango `2803:f800::/32` (Cloudflare en LATAM)
+        - Rango `2a06:98c1::/32` (Cloudflare Europa)  
+            Esto confirma distribución geográfica global.
+- **Posibles pasos de recon**:
+    1. Revisar _DNS históricos_ (con herramientas como SecurityTrails, DNSDumpster) para ver si alguna vez expuso un IP real.
+    2. Usar _subdomain enumeration_ para detectar servicios no detrás de Cloudflare.
+    3. Buscar coincidencias en certificados SSL (crt.sh) que puedan revelar endpoints directos.
+
+![[Pasted image 20250915162627.png]]
+
+### Información que se obtiene
+- **Proveedor de correo**: Google Workspace (antes G Suite).
+    - Servidores MX: `aspmx.l.google.com`, `alt1.aspmx.l.google.com`, `alt2...`, `alt3...`, `alt4...`.
+    - Prioridades: `1, 5, 10` → Gmail gestiona balanceo y redundancia.
+- **Implicaciones técnicas**:
+    - La organización no administra directamente su propio servidor de correo → delega seguridad, antispam y disponibilidad a Google.
+    - Menos probabilidad de vulnerabilidades típicas de servidores de correo mal configurados (ej: open relay, falta de TLS).
+    - En un pentest, se podría revisar si existen registros **SPF, DKIM y DMARC** asociados, ya que configuraciones débiles permitirían _spoofing_ de correos del dominio.
+- **Superficie de ataque indirecta**:
+    - Un atacante podría intentar phishing dirigido usando el dominio si no hay políticas estrictas de autenticación.
+    - El hecho de usar Gmail corporativo implica dependencia de Google, pero reduce la exposición de infraestructura propia.
+
+![[Pasted image 20250915164330.png]]
+
+### Lo que indica cada registro
+- **`google-site-verification=...`**  
+    → El dominio está vinculado a servicios de Google (ej: Google Search Console, Google Workspace). Sirve para confirmar propiedad del dominio ante Google.
+- **`apple-domain=SVc6CpThnBMu0qUK`**  
+    → Similar, pero para Apple. Puede indicar integración con servicios como iCloud Mail, Apple Business Manager o validaciones de apps.
+- **`v=spf1 include:icloud.com include:_spf.google.com ~all`**  
+    → Registro **SPF** (Sender Policy Framework).
+    - Autoriza que correos enviados desde **iCloud** y **Google** sean considerados válidos para este dominio.
+    - El `~all` (softfail) significa que correos enviados desde otros orígenes **no están explícitamente prohibidos**, solo marcados como sospechosos → deja cierta puerta abierta al _spoofing_.
+### Implicaciones en seguridad
+- **Correo**: El dominio permite enviar emails legítimos desde dos proveedores distintos (Google + iCloud). Esto amplía la superficie y debe estar controlado.
+- **Spoofing**: El uso de `~all` en vez de `-all` implica que aún podrían colarse correos falsificados en algunos servidores mal configurados.
+- **OSINT**: Los tokens de verificación confirman que el dominio está gestionado por Google y Apple → útil para perfilar qué ecosistema de servicios utiliza la organización.
+
+![[Pasted image 20250915164906.png]]
+![[Pasted image 20250915164931.png]]
+
+### Lo que se puede leer de esta salida
+- **Certificado SSL**:
+    - **Subject**: `CN=photoguruai.com` → válido para el dominio.
+    - **SAN (Subject Alternative Names)**: incluye `photoguruai.com` y `*.photoguruai.com`.
+    - **Emisor**: Google Trust Services (CA reconocida).
+    - **Validez**: del **14 de agosto de 2025** al **12 de noviembre de 2025**.
+    - Algoritmo: ECDSA con SHA-256 → moderno y seguro.
+- **Cadena de certificados**:
+    - Certificado final (photoguruai.com).
+    - Intermedio: **Google Trust Services WE1**.
+    - Raíz: **GTS Root R4**, firmado por **GlobalSign Root CA**.
+- **Parámetros de conexión TLS**:
+    - **Protocolo**: TLS 1.3 (el más actual).
+    - **Cipher Suite**: `TLS_AES_256_GCM_SHA384` → robusto y recomendado.
+    - **Curva**: X25519 (intercambio de claves rápido y seguro).
+    - **Renegociación**: no permitida (TLS 1.3 lo elimina).
+    - **Compresión**: deshabilitada (evita ataques como CRIME).
+- **Tickets de sesión**:
+    - Se observan _New Session Tickets_ → permiten reusar sesiones sin renegociar el handshake, optimizando rendimiento.
+
+### Implicaciones de seguridad
+1. **Cifrado fuerte y actualizado** → No hay vulnerabilidades básicas (como uso de TLS 1.0/1.1 o RSA débil).
+2. **Certificado válido** → Emitido por una CA confiable, aceptado en navegadores.
+3. **Wildcard certificado** → Cubre subdominios (`*.photoguruai.com`), lo que facilita despliegues, pero también significa que si un subdominio es comprometido, el atacante puede usar un certificado válido.
+4. **Vigencia corta** → El certificado dura solo 3 meses, típico de certificados gestionados automáticamente (ej: con Let’s Encrypt o Google ACME).
